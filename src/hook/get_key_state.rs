@@ -1,15 +1,11 @@
 use detour::GenericDetour;
-use process_memory::Memory;
-use process_memory::TryIntoProcessHandle;
+
 use winapi::shared::minwindef::HINSTANCE__;
 use winapi::shared::ntdef::SHORT;
 
-use tracing::info;
-use winapi::shared::minwindef::BOOL;
-use winapi::shared::minwindef::INT;
-use winapi::shared::minwindef::PBYTE;
+use tracing::{info, warn};
 
-use winapi::shared::ntdef::HRESULT;
+use winapi::shared::minwindef::INT;
 
 // use winapi::um::d3d11::ID3D11CommandList;
 use winapi::um::libloaderapi::GetModuleHandleA;
@@ -26,8 +22,20 @@ pub unsafe fn create_hook() -> color_eyre::Result<()> {
     );
     // info!("We found the GetKeyboardState  function !");
     let function: extern "system" fn(INT) -> SHORT = std::mem::transmute(function);
-    let hook = GenericDetour::new(function, function_hooked)?;
-    hook.enable()?;
+    let hook = match GenericDetour::new(function, function_hooked) {
+        Ok(hook) => hook,
+        Err(e) => {
+            warn!("Could not create the hook for function User32.dll::GetKeyState. {e:?}");
+            return Err(e.into());
+        }
+    };
+    match hook.enable() {
+        Ok(()) => (),
+        Err(e) => {
+            warn!("Could not enable hook of User32.dll::GetKeyState. {e:?}");
+            return Err(e.into());
+        }
+    }
     DETOUR = Some(hook);
 
     info!("GetKeyState hook created");
@@ -35,7 +43,7 @@ pub unsafe fn create_hook() -> color_eyre::Result<()> {
     Ok(())
 }
 
-extern "system" fn function_hooked(n_virt_key: INT) -> SHORT {
+pub extern "system" fn function_hooked(n_virt_key: INT) -> SHORT {
     unsafe {
         let res = DETOUR.as_mut().unwrap().call(n_virt_key);
 

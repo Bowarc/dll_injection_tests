@@ -1,6 +1,8 @@
 use detour::GenericDetour;
+use process_memory::Memory;
+use process_memory::TryIntoProcessHandle;
 
-use tracing::info;
+use tracing::{info, warn};
 
 use winapi::shared::minwindef::HINSTANCE__;
 
@@ -18,25 +20,45 @@ pub unsafe fn create_hook() -> color_eyre::Result<()> {
         dll as *mut HINSTANCE__,
         "UpdateWindow\0".as_ptr() as *const i8,
     );
-    info!("We found the UpdateWindow function !");
     let function: extern "system" fn(HWND) -> bool = std::mem::transmute(function);
-    let hook = GenericDetour::new(function, function_hooked)?;
-    hook.enable()?;
+
+    let hook = match GenericDetour::new(function, function_hooked) {
+        Ok(hook) => hook,
+        Err(e) => {
+            warn!("Could not create the hook for function User32.dll::UpdateWindow. {e:?}");
+            return Err(e.into());
+        }
+    };
+
+    match hook.enable() {
+        Ok(()) => (),
+        Err(e) => {
+            warn!("Could not enable hook of User32.dll::UpdateWindow. {e:?}");
+            return Err(e.into());
+        }
+    }
     DETOUR = Some(hook);
 
-    info!("UpdateWindow hook created");
+    info!("User32.dll::UpdateWindow hook created");
 
     Ok(())
 }
 
-extern "system" fn function_hooked(h_wnd: HWND) -> bool {
+pub extern "system" fn function_hooked(hwnd: HWND) -> bool {
     // info!("Hooked function has been called with param: {nVirtKey:?}");
     // call the original
 
     unsafe {
-        let res = DETOUR.as_mut().unwrap().call(h_wnd);
+        // let handle = (std::process::id() as process_memory::Pid)
+        //     .try_into_process_handle()
+        //     .unwrap();
+        // let member: process_memory::DataMember<HWND> =
+        //     process_memory::DataMember::new_offset(handle, vec![hwnd as *const _ as usize]);
+        // info!("try read of HWND: {:?}", member.read().unwrap());
 
-        info!("UpdateWindow function has been called with param: {h_wnd:?} and returned: {res:?}");
+        let res = DETOUR.as_mut().unwrap().call(hwnd);
+
+        info!("UpdateWindow function has been called with param: {hwnd:?} and returned: {res:?}");
 
         res
     }

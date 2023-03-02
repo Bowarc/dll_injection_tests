@@ -11,7 +11,7 @@ fn main() -> color_eyre::Result<()> {
         .with_max_level(LevelFilter::DEBUG)
         .init();
 
-    let target_process_name = "Vupa";
+    let target_process_name = "notepad";
 
     let target_process = OwnedProcess::find_first_by_name(target_process_name).unwrap();
 

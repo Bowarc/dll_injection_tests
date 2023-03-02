@@ -7,7 +7,7 @@ use winapi::um::libloaderapi::GetModuleHandleA;
 use winapi::um::libloaderapi::GetProcAddress;
 use winapi::um::winuser::PAINTSTRUCT;
 
-static mut DETOUR: Option<GenericDetour<extern "system" fn(HWND, PAINTSTRUCT) -> BOOL>> = None;
+pub static mut DETOUR: Option<GenericDetour<extern "system" fn(HWND, PAINTSTRUCT) -> BOOL>> = None;
 
 pub unsafe fn create_hook() -> color_eyre::Result<()> {
     let dll = GetModuleHandleA("User32.dll\0".as_ptr() as *const i8);
@@ -24,7 +24,9 @@ pub unsafe fn create_hook() -> color_eyre::Result<()> {
     Ok(())
 }
 
-extern "system" fn function_hooked(h_wnd: HWND, lp_paint: PAINTSTRUCT) -> BOOL {
+pub fn setup() {}
+
+pub extern "system" fn function_hooked(h_wnd: HWND, lp_paint: PAINTSTRUCT) -> BOOL {
     // info!("Hooked function has been called with param: {nVirtKey:?}");
     // call the original
 

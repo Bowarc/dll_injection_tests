@@ -24,10 +24,9 @@ patternscan = "1.2.0"
 process-memory = "0.5.0"
 strum = {version= "0.24.1", features = ["strum_macros"]}
 strum_macros = "0.24.3"
-toy-arms = "0.9.4"
-toy-arms-bindings = "0.1.0"
 tracing = "0.1.37"
 tracing-subscriber = "0.3.16"
 winapi = "0.3.9"
 windows = "0.44.0"
+
 
