@@ -1,6 +1,7 @@
 use detour::GenericDetour;
 use process_memory::Memory;
 use process_memory::TryIntoProcessHandle;
+use winapi::shared::minwindef::BOOL;
 
 use tracing::{info, warn};
 
@@ -11,40 +12,11 @@ use winapi::shared::windef::HWND;
 use winapi::um::libloaderapi::GetModuleHandleA;
 use winapi::um::libloaderapi::GetProcAddress;
 
-static mut DETOUR: Option<GenericDetour<extern "system" fn(HWND) -> bool>> = None;
+pub static mut DETOUR: Option<GenericDetour<extern "system" fn(HWND) -> BOOL>> = None;
 
-pub unsafe fn create_hook() -> color_eyre::Result<()> {
-    let dll = GetModuleHandleA("User32.dll\0".as_ptr() as *const i8);
+pub fn setup() {}
 
-    let function = GetProcAddress(
-        dll as *mut HINSTANCE__,
-        "UpdateWindow\0".as_ptr() as *const i8,
-    );
-    let function: extern "system" fn(HWND) -> bool = std::mem::transmute(function);
-
-    let hook = match GenericDetour::new(function, function_hooked) {
-        Ok(hook) => hook,
-        Err(e) => {
-            warn!("Could not create the hook for function User32.dll::UpdateWindow. {e:?}");
-            return Err(e.into());
-        }
-    };
-
-    match hook.enable() {
-        Ok(()) => (),
-        Err(e) => {
-            warn!("Could not enable hook of User32.dll::UpdateWindow. {e:?}");
-            return Err(e.into());
-        }
-    }
-    DETOUR = Some(hook);
-
-    info!("User32.dll::UpdateWindow hook created");
-
-    Ok(())
-}
-
-pub extern "system" fn function_hooked(hwnd: HWND) -> bool {
+pub extern "system" fn function_hooked(hwnd: HWND) -> BOOL {
     // info!("Hooked function has been called with param: {nVirtKey:?}");
     // call the original
 

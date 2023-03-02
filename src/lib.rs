@@ -31,14 +31,13 @@ fn ctor() {
 unsafe fn do_faillible_stuff() -> color_eyre::Result<()> {
     use winapi::{
         shared::{
-            minwindef::{BOOL, PBYTE},
+            minwindef::{BOOL, INT, PBYTE},
+            ntdef::SHORT,
             windef::HWND,
         },
         um::winuser::PAINTSTRUCT,
     };
 
-    hook::end_paint::create_hook()?;
-    // fn() -> BOOL
     hook::create_generic_hook::<extern "system" fn(HWND, PAINTSTRUCT) -> BOOL>(
         "User32.dll",
         "EndPaint",
@@ -47,8 +46,21 @@ unsafe fn do_faillible_stuff() -> color_eyre::Result<()> {
         hook::end_paint::setup,
     )?;
 
-    // hook::finish_command_list::create_hook()?;
-    // hook::update_window::create_hook()?;
+    hook::create_generic_hook::<extern "system" fn(HWND) -> BOOL>(
+        "User32.dll",
+        "UpdateWindow",
+        hook::update_window::function_hooked,
+        &mut hook::update_window::DETOUR,
+        hook::update_window::setup,
+    )?;
+
+    hook::create_generic_hook::<extern "system" fn(INT) -> SHORT>(
+        "User32.dll",
+        "GetKeyState",
+        hook::get_key_state::function_hooked,
+        &mut hook::get_key_state::DETOUR,
+        hook::get_key_state::setup,
+    )?;
 
     hook::create_generic_hook::<extern "system" fn(PBYTE) -> BOOL>(
         "User32.dll",
@@ -57,9 +69,6 @@ unsafe fn do_faillible_stuff() -> color_eyre::Result<()> {
         &mut hook::get_keyboard_state::DETOUR, /* setup_function */
         hook::get_keyboard_state::setup,
     )?;
-    // hook::get_keyboard_state::create_hook()?;
-
-    // hook::get_key_state::create_hook()?;
 
     Ok(())
 }

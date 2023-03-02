@@ -374,38 +374,6 @@ struct VirualKeyboard {
     translated: std::collections::HashMap<VK, u8>,
 }
 
-pub unsafe fn create_hook() -> color_eyre::Result<()> {
-    let dll = GetModuleHandleA("User32.dll\0".as_ptr() as *const i8);
-
-    let function = GetProcAddress(
-        dll as *mut HINSTANCE__,
-        "GetKeyboardState\0".as_ptr() as *const i8,
-    );
-
-    let function: extern "system" fn(PBYTE) -> BOOL = std::mem::transmute(function);
-    let hook = match GenericDetour::new(function, function_hooked) {
-        Ok(hook) => hook,
-        Err(e) => {
-            warn!("Could not create the hook for function User32.dll::GetKeyboardState. {e:?}");
-            return Err(e.into());
-        }
-    };
-    match hook.enable() {
-        Ok(()) => (),
-        Err(e) => {
-            warn!("Could not enable hook of User32.dll::GetKeyboardState. {e:?}");
-            return Err(e.into());
-        }
-    }
-    DETOUR = Some(hook);
-
-    info!("GetKeyboardState  hook created");
-
-    VIRTUALKEYBOARD = Some(VirualKeyboard::new());
-
-    Ok(())
-}
-
 pub fn setup() {
     unsafe {
         VIRTUALKEYBOARD = Some(VirualKeyboard::new());
@@ -416,16 +384,16 @@ pub extern "system" fn function_hooked(lp_key_state: PBYTE) -> BOOL {
     unsafe {
         let res = DETOUR.as_mut().unwrap().call(lp_key_state);
 
-        // let handle = (std::process::id() as process_memory::Pid)
-        //     .try_into_process_handle()
-        //     .unwrap();
-        // let member: process_memory::DataMember<[u8; 256]> =
-        //     process_memory::DataMember::new_offset(handle, vec![lp_key_state as *const _ as usize]);
+        let handle = (std::process::id() as process_memory::Pid)
+            .try_into_process_handle()
+            .unwrap();
+        let member: process_memory::DataMember<[u8; 256]> =
+            process_memory::DataMember::new_offset(handle, vec![lp_key_state as *const _ as usize]);
 
-        // VIRTUALKEYBOARD
-        //     .as_mut()
-        //     .unwrap()
-        //     .update(member.read().unwrap());
+        VIRTUALKEYBOARD
+            .as_mut()
+            .unwrap()
+            .update(member.read().unwrap());
 
         info!("GetKeyboardState function has been called with param: {lp_key_state:?} and returned: {res:?}");
 
