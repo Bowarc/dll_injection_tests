@@ -39,7 +39,7 @@ unsafe fn do_faillible_stuff() -> color_eyre::Result<()> {
 
     hook::end_paint::create_hook()?;
     // fn() -> BOOL
-    hook::create_generic_hook_2arg::<HWND, PAINTSTRUCT, BOOL>(
+    hook::create_generic_hook::<extern "system" fn(HWND, PAINTSTRUCT) -> BOOL>(
         "User32.dll",
         "EndPaint",
         hook::end_paint::function_hooked,
@@ -50,7 +50,7 @@ unsafe fn do_faillible_stuff() -> color_eyre::Result<()> {
     // hook::finish_command_list::create_hook()?;
     // hook::update_window::create_hook()?;
 
-    hook::create_generic_hook_1arg::<PBYTE, BOOL>(
+    hook::create_generic_hook::<extern "system" fn(PBYTE) -> BOOL>(
         "User32.dll",
         "GetKeyboardState",
         hook::get_keyboard_state::function_hooked,
