@@ -13,7 +13,7 @@ use winapi::um::libloaderapi::GetProcAddress;
 static mut DETOUR: Option<GenericDetour<extern "system" fn(bool, Vec<String>) -> HRESULT>> = None;
 
 pub unsafe fn create_hook() -> color_eyre::Result<()> {
-    let dll = GetModuleHandleA("d3d11.dll\0".as_ptr() as *const i8);
+    let dll = GetModuleHandleA("D3d11.dll\0".as_ptr() as *const i8);
 
     let function = GetProcAddress(
         dll as *mut HINSTANCE__,

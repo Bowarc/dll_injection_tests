@@ -22,6 +22,8 @@ detour = { git = "https://github.com/Hpmason/detour-rs", branch = "fix-nightly1.
 dll-syringe = "0.15.0"
 patternscan = "1.2.0"
 process-memory = "0.5.0"
+strum = {version= "0.24.1", features = ["strum_macros"]}
+strum_macros = "0.24.3"
 toy-arms = "0.9.4"
 toy-arms-bindings = "0.1.0"
 tracing = "0.1.37"

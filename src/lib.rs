@@ -30,9 +30,12 @@ fn ctor() {
 }
 
 unsafe fn do_faillible_stuff() -> color_eyre::Result<()> {
-    // hook::end_paint::create_hook();
+    // hook::end_paint::create_hook()?;
     // hook::finish_command_list::create_hook();
     // hook::update_window::create_hook()?;
+    hook::get_keyboard_state::create_hook()?;
+
+    // hook::get_key_state::create_hook()?;
 
     Ok(())
 }
