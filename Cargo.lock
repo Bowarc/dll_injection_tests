@@ -164,6 +164,7 @@ dependencies = [
  "ctor",
  "detour",
  "dll-syringe",
+ "libc",
  "patternscan",
  "process-memory",
  "strum",

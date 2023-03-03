@@ -9,21 +9,6 @@ use winapi::um::winuser::PAINTSTRUCT;
 
 pub static mut DETOUR: Option<GenericDetour<extern "system" fn(HWND, PAINTSTRUCT) -> BOOL>> = None;
 
-pub unsafe fn create_hook() -> color_eyre::Result<()> {
-    let dll = GetModuleHandleA("User32.dll\0".as_ptr() as *const i8);
-
-    let function = GetProcAddress(dll as *mut HINSTANCE__, "EndPaint\0".as_ptr() as *const i8);
-    info!("We found the EndPaint function !");
-    let function: extern "system" fn(HWND, PAINTSTRUCT) -> BOOL = std::mem::transmute(function);
-    let hook = GenericDetour::new(function, function_hooked)?;
-    hook.enable()?;
-    DETOUR = Some(hook);
-
-    info!("EndPaint hook created");
-
-    Ok(())
-}
-
 pub fn setup() {}
 
 pub extern "system" fn function_hooked(h_wnd: HWND, lp_paint: PAINTSTRUCT) -> BOOL {

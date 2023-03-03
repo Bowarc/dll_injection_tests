@@ -16,30 +16,27 @@ fn ctor() {
 
     info!("Hi from the lib");
 
-    println!("yo");
-
-    if let Err(e) = unsafe { do_faillible_stuff() } {
-        error!("Could not create hooks: {e:?}");
-    }
+    // if let Err(e) = unsafe { do_faillible_stuff() } {
+    //     error!("Could not create hooks: {e:?}");
+    // }
     info!("Good");
 
-    // if let Err(e) = unsafe { test_memory() } {
-    //     error!("Stuff went south: {e:?}");
-    // }
+    if let Err(e) = unsafe { test_memory() } {
+        error!("Stuff went south: {e:?}");
+    }
 }
 
 unsafe fn do_faillible_stuff() -> color_eyre::Result<()> {
     use winapi::{
         shared::{
-            minwindef::{BOOL, PBYTE},
+            minwindef::{BOOL, INT, PBYTE},
+            ntdef::SHORT,
             windef::HWND,
         },
         um::winuser::PAINTSTRUCT,
     };
 
-    hook::end_paint::create_hook()?;
-    // fn() -> BOOL
-    hook::create_generic_hook_2arg::<HWND, PAINTSTRUCT, BOOL>(
+    hook::create_generic_hook::<extern "system" fn(HWND, PAINTSTRUCT) -> BOOL>(
         "User32.dll",
         "EndPaint",
         hook::end_paint::function_hooked,
@@ -47,35 +44,67 @@ unsafe fn do_faillible_stuff() -> color_eyre::Result<()> {
         hook::end_paint::setup,
     )?;
 
-    // hook::finish_command_list::create_hook()?;
-    // hook::update_window::create_hook()?;
+    hook::create_generic_hook::<extern "system" fn(HWND) -> BOOL>(
+        "User32.dll",
+        "UpdateWindow",
+        hook::update_window::function_hooked,
+        &mut hook::update_window::DETOUR,
+        hook::update_window::setup,
+    )?;
 
-    hook::create_generic_hook_1arg::<PBYTE, BOOL>(
+    // hook::create_generic_hook::<extern "system" fn(INT) -> SHORT>(
+    //     "User32.dll",
+    //     "GetKeyState",
+    //     hook::get_key_state::function_hooked,
+    //     &mut hook::get_key_state::DETOUR,
+    //     hook::get_key_state::setup,
+    // )?;
+
+    hook::create_generic_hook::<extern "system" fn(PBYTE) -> BOOL>(
         "User32.dll",
         "GetKeyboardState",
         hook::get_keyboard_state::function_hooked,
         &mut hook::get_keyboard_state::DETOUR, /* setup_function */
         hook::get_keyboard_state::setup,
     )?;
-    // hook::get_keyboard_state::create_hook()?;
-
-    // hook::get_key_state::create_hook()?;
 
     Ok(())
 }
 
 unsafe fn test_memory() -> color_eyre::Result<()> {
+    let addr = 0x1bfec586ac8;
+    read_memory::<u32>(addr).unwrap();
+
+    write_memory::<u32>(addr, 101).unwrap();
+
+    Ok(())
+}
+
+pub fn read_memory<T>(address: usize) -> color_eyre::Result<T>
+where
+    T: std::marker::Copy + std::fmt::Debug,
+{
     use process_memory::Memory;
-    use process_memory::TryIntoProcessHandle;
 
-    // let dm: process_memory::DataMember<u8> = process_memory::DataMember::new(
-    //     (std::process::id() as process_memory::Pid).try_into_process_handle()?,
-    // );
+    let lm: process_memory::LocalMember<T> = process_memory::LocalMember::new_offset(vec![address]);
 
-    info!("Pid: {}", std::process::id());
-    info!("Backtrace: {:#?}", std::backtrace::Backtrace::capture());
+    // let res: &T = unsafe { &*(address as *const T) };
+    let res = unsafe { lm.read()? };
+    info!("Read: {:?} at address: 0x{:x}", res, address);
 
-    // info!("Process offset is: {:?}", dm.get_offset());
+    Ok(res)
+}
+
+pub fn write_memory<T>(address: usize, value: T) -> color_eyre::Result<()>
+where
+    T: std::marker::Copy + std::fmt::Debug,
+{
+    use process_memory::Memory;
+
+    info!("Writing {:?} at address: 0x{:x}", value, address);
+    let lm: process_memory::LocalMember<T> = process_memory::LocalMember::new_offset(vec![address]);
+
+    lm.write(&value).unwrap();
 
     Ok(())
 }
