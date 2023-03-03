@@ -16,9 +16,9 @@ fn ctor() {
 
     info!("Hi from the lib");
 
-    // if let Err(e) = unsafe { do_faillible_stuff() } {
-    //     error!("Could not create hooks: {e:?}");
-    // }
+    if let Err(e) = unsafe { do_faillible_stuff() } {
+        error!("Could not create hooks: {e:?}");
+    }
     info!("Good");
 
     if let Err(e) = unsafe { test_memory() } {
@@ -52,13 +52,13 @@ unsafe fn do_faillible_stuff() -> color_eyre::Result<()> {
         hook::update_window::setup,
     )?;
 
-    // hook::create_generic_hook::<extern "system" fn(INT) -> SHORT>(
-    //     "User32.dll",
-    //     "GetKeyState",
-    //     hook::get_key_state::function_hooked,
-    //     &mut hook::get_key_state::DETOUR,
-    //     hook::get_key_state::setup,
-    // )?;
+    hook::create_generic_hook::<extern "system" fn(INT) -> SHORT>(
+        "User32.dll",
+        "GetKeyState",
+        hook::get_key_state::function_hooked,
+        &mut hook::get_key_state::DETOUR,
+        hook::get_key_state::setup,
+    )?;
 
     hook::create_generic_hook::<extern "system" fn(PBYTE) -> BOOL>(
         "User32.dll",
