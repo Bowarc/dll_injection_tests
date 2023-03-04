@@ -13,14 +13,14 @@ fn main() -> color_eyre::Result<()> {
 
     info!("Injector start");
 
-    let target_process_name = "basic_template";
+    let target_process_name = "test_target";
 
     let target_process = OwnedProcess::find_first_by_name(target_process_name).unwrap();
 
     info!("Found the {target_process_name} process");
 
     let syringe = Syringe::for_process(target_process);
-    //
+
     info!("Created syringe");
 
     let listener = TcpListener::bind("127.0.0.1:7331")?;

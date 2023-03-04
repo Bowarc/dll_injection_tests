@@ -1,7 +1,8 @@
+use address::*;
 use std::net::TcpStream;
 use std::sync::Mutex;
-use tracing::{error, info};
-
+use tracing::{error, info, warn};
+mod address;
 mod hook;
 
 #[ctor::ctor]
@@ -17,12 +18,12 @@ fn ctor() {
     info!("Hi from the lib");
 
     if let Err(e) = unsafe { do_faillible_stuff() } {
-        error!("Could not create hooks: {e:?}");
+        warn!("Could not create hooks: {e:?}");
     }
     info!("Good");
 
     if let Err(e) = unsafe { test_memory() } {
-        error!("Stuff went south: {e:?}");
+        warn!("Stuff went south: {e:?}");
     }
 }
 
@@ -72,7 +73,7 @@ unsafe fn do_faillible_stuff() -> color_eyre::Result<()> {
 }
 
 unsafe fn test_memory() -> color_eyre::Result<()> {
-    let addr = 0x1bfec586ac8;
+    let addr: Address = 0xf946f5f454.into();
     read_memory::<u32>(addr).unwrap();
 
     write_memory::<u32>(addr, 101).unwrap();
@@ -80,29 +81,31 @@ unsafe fn test_memory() -> color_eyre::Result<()> {
     Ok(())
 }
 
-pub fn read_memory<T>(address: usize) -> color_eyre::Result<T>
+pub fn read_memory<T>(address: Address) -> color_eyre::Result<T>
 where
     T: std::marker::Copy + std::fmt::Debug,
 {
     use process_memory::Memory;
 
-    let lm: process_memory::LocalMember<T> = process_memory::LocalMember::new_offset(vec![address]);
+    let lm: process_memory::LocalMember<T> =
+        process_memory::LocalMember::new_offset(vec![*address]);
 
     // let res: &T = unsafe { &*(address as *const T) };
     let res = unsafe { lm.read()? };
-    info!("Read: {:?} at address: 0x{:x}", res, address);
+    info!("Reading {:?} at address: {}", res, address);
 
     Ok(res)
 }
 
-pub fn write_memory<T>(address: usize, value: T) -> color_eyre::Result<()>
+pub fn write_memory<T>(address: Address, value: T) -> color_eyre::Result<()>
 where
     T: std::marker::Copy + std::fmt::Debug,
 {
     use process_memory::Memory;
 
-    info!("Writing {:?} at address: 0x{:x}", value, address);
-    let lm: process_memory::LocalMember<T> = process_memory::LocalMember::new_offset(vec![address]);
+    info!("Writing {:?} at address: {}", value, address);
+    let lm: process_memory::LocalMember<T> =
+        process_memory::LocalMember::new_offset(vec![*address]);
 
     lm.write(&value).unwrap();
 
