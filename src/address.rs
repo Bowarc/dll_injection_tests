@@ -1,7 +1,7 @@
 #[allow(dead_code)]
 type Addr = Address;
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq)]
 pub struct Address(usize);
 
 impl std::ops::Deref for Address {
@@ -25,5 +25,12 @@ impl std::fmt::Debug for Address {
 impl From<usize> for Address {
     fn from(a: usize) -> Self {
         Self(a)
+    }
+}
+
+impl std::ops::Sub for Address {
+    type Output = Address;
+    fn sub(self, a: Self) -> Self {
+        Address(self.0 - a.0)
     }
 }

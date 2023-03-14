@@ -19,8 +19,9 @@ fn ctor() {
 
     if let Err(e) = unsafe { do_faillible_stuff() } {
         warn!("Could not create hooks: {e:?}");
+    } else {
+        info!("Hooks created");
     }
-    info!("Good");
 
     if let Err(e) = unsafe { test_memory() } {
         warn!("Stuff went south: {e:?}");
@@ -30,37 +31,41 @@ fn ctor() {
 unsafe fn do_faillible_stuff() -> color_eyre::Result<()> {
     use winapi::{
         shared::{
+            basetsd::{PSIZE_T, SIZE_T},
             minwindef::{BOOL, INT, PBYTE},
-            ntdef::SHORT,
+            ntdef::{HANDLE, NTSTATUS, PVOID, SHORT},
             windef::HWND,
         },
-        um::winuser::PAINTSTRUCT,
+        um::{memoryapi::WIN32_MEMORY_INFORMATION_CLASS, winuser::PAINTSTRUCT},
     };
 
-    hook::create_generic_hook::<extern "system" fn(HWND, PAINTSTRUCT) -> BOOL>(
-        "User32.dll",
-        "EndPaint",
-        hook::end_paint::function_hooked,
-        &mut hook::end_paint::DETOUR,
-        hook::end_paint::setup,
-    )?;
+    // This might have potential, diddn't digged for now
+    // hook::create_generic_hook::<extern "system" fn(HWND, PAINTSTRUCT) -> BOOL>(
+    //     "User32.dll",
+    //     "EndPaint",
+    //     hook::end_paint::function_hooked,
+    //     &mut hook::end_paint::DETOUR,
+    //     hook::end_paint::setup,
+    // )?;
 
-    hook::create_generic_hook::<extern "system" fn(HWND) -> BOOL>(
-        "User32.dll",
-        "UpdateWindow",
-        hook::update_window::function_hooked,
-        &mut hook::update_window::DETOUR,
-        hook::update_window::setup,
-    )?;
+    // This has potential, not digged for now tho
+    // hook::create_generic_hook::<extern "system" fn(HWND) -> BOOL>(
+    //     "User32.dll",
+    //     "UpdateWindow",
+    //     hook::update_window::function_hooked,
+    //     hook::update_window::setup,
+    // )?;
 
-    hook::create_generic_hook::<extern "system" fn(INT) -> SHORT>(
-        "User32.dll",
-        "GetKeyState",
-        hook::get_key_state::function_hooked,
-        &mut hook::get_key_state::DETOUR,
-        hook::get_key_state::setup,
-    )?;
+    // This is kinda buggy (might be the fact that i not understand it clearly)
+    // hook::create_generic_hook::<extern "system" fn(INT) -> SHORT>(
+    //     "User32.dll",
+    //     "GetKeyState",
+    //     hook::get_key_state::function_hooked,
+    //     &mut hook::get_key_state::DETOUR,
+    //     hook::get_key_state::setup,
+    // )?;
 
+    // This is cool and usefull, well, nvm, modifying the array doesn't do sht
     hook::create_generic_hook::<extern "system" fn(PBYTE) -> BOOL>(
         "User32.dll",
         "GetKeyboardState",
@@ -69,14 +74,33 @@ unsafe fn do_faillible_stuff() -> color_eyre::Result<()> {
         hook::get_keyboard_state::setup,
     )?;
 
+    // This has insane potential
+    // hook::create_generic_hook::<
+    //     extern "system" fn(
+    //         HANDLE,
+    //         PVOID,
+    //         WIN32_MEMORY_INFORMATION_CLASS,
+    //         PVOID,
+    //         SIZE_T,
+    //         PSIZE_T,
+    //     ) -> NTSTATUS,
+    // >(
+    //     "ntdll.dll",
+    //     "ZwQueryVirtualMemory",
+    //     hook::zw_query_virtual_memory::function_hooked,
+    //     &mut hook::zw_query_virtual_memory::DETOUR,
+    //     hook::zw_query_virtual_memory::setup,
+    // )?;
+
     Ok(())
 }
 
 unsafe fn test_memory() -> color_eyre::Result<()> {
-    let addr: Address = 0xf946f5f454.into();
+    let addr: Address = 0x27e230791d8.into();
+
     read_memory::<u32>(addr).unwrap();
 
-    write_memory::<u32>(addr, 101).unwrap();
+    write_memory::<u32>(addr, 745_000).unwrap();
 
     Ok(())
 }
