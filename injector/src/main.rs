@@ -12,6 +12,8 @@ fn main() -> Result<(), eframe::Error> {
 
         // does not wrork, i'll take time later to understand why
         icon_data: Some(eframe::IconData {
+            #[rustfmt::skip]
+            rgba: vec![
                 0, 0, 0, 0, 0, 0, 0, 0,
                 0, 0, 0, 0, 0, 0, 0, 0,
                 0, 0, 0, 0, 0, 0, 0, 0,
@@ -24,7 +26,9 @@ fn main() -> Result<(), eframe::Error> {
             width: 8,
             height: 8,
         }),
+
         default_theme: eframe::Theme::Dark,
+
         ..Default::default()
     };
     eframe::run_native(
