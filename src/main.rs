@@ -13,8 +13,7 @@ fn main() -> color_eyre::Result<()> {
 
     info!("Injector start");
 
-    // let target_process_name = "basic_template";
-    let target_process_name = "Mindustry";
+    let target_process_name = "basic_template";
 
     let target_process = OwnedProcess::find_first_by_name(target_process_name).unwrap();
 
@@ -26,11 +25,10 @@ fn main() -> color_eyre::Result<()> {
 
     let listener = TcpListener::bind("127.0.0.1:7331")?;
 
-    // let injected_payload = syringe.inject("./target/debug/alfred.dll").unwrap();
-    let injected_payload = syringe.inject("./target/debug/example_wnd.dll").unwrap();
-    info!("Injected in {target_process_name}");
+    let dll_path = "target/debug/alfred.dll";
 
-    // std::thread::sleep(std::time::Duration::from_secs(10));
+    let injected_payload = syringe.inject(dll_path).unwrap();
+    info!("Injected in {target_process_name}");
 
     let (mut stream, addr) = listener.accept()?;
     info!("{addr} accepted");

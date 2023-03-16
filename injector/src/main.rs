@@ -64,7 +64,7 @@ pub enum InjectionError {
     Io(std::io::Error),
     #[error("The target is unsupported")]
     UnsupportedTarget,
-    #[error("The remote code ran into an io error")]
+    #[error("The remote code ran into an io error: {0}")]
     RemoteIo(std::io::Error),
     #[error("The remote code ran into an exception")]
     RemoteException(dll_syringe::error::ExceptionCode),

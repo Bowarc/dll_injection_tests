@@ -17,15 +17,15 @@ fn ctor() {
 
     info!("Hi from the lib");
 
-    if let Err(e) = unsafe { do_faillible_stuff() } {
-        warn!("Could not create hooks: {e:?}");
-    } else {
-        info!("Hooks created");
-    }
+    // if let Err(e) = unsafe { do_faillible_stuff() } {
+    //     warn!("Could not create hooks: {e:?}");
+    // } else {
+    //     info!("Hooks created");
+    // }
 
-    if let Err(e) = unsafe { test_memory() } {
-        warn!("Stuff went south: {e:?}");
-    }
+    // if let Err(e) = unsafe { test_memory() } {
+    //     warn!("Stuff went south: {e:?}");
+    // }
 }
 
 unsafe fn do_faillible_stuff() -> color_eyre::Result<()> {
